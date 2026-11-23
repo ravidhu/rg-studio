@@ -1,0 +1,204 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Design tokens. The chrome is built on a deep navy for text and dark
+ * surfaces, cool off-white surfaces in the light theme, and one pink accent,
+ * with a violet and a blue for the decorative gradient. The colours are our
+ * own derivations: no brand palette is reproduced. Each text, control and
+ * focus colour is chosen for WCAG AA on the surface it sits on. Status
+ * colours are separate from the accent on purpose, so that a state never
+ * looks like a series.
+ */
+:root {
+  color-scheme: light;
+  --radius: 0.5rem;
+  --background: #f3f4fa;
+  --foreground: #0b1033;
+  --card: #ffffff;
+  --card-foreground: #0b1033;
+  --sidebar: #ffffff;
+  --muted: #e6e8f2;
+  --muted-foreground: #3a4063;
+  --subtle-foreground: #5c6285;
+  --border: #d8dbea;
+  --input: #7f86a8;
+  --brand: #c2188f;
+  --brand-mid: #7a3fd0;
+  --brand-deep: #2a4bd7;
+  --ring: #c2188f;
+  /* Darker shade of the accent: text and buttons need 4.5:1 on the page. */
+  --primary: #b01285;
+  --primary-foreground: #ffffff;
+  --secondary: #e6e8f2;
+  --secondary-foreground: #0b1033;
+  --accent: #fde8f5;
+  --accent-foreground: #0b1033;
+  --destructive: #b42318;
+
+  /* Charts */
+  --chart-axis: #b4b9d0;
+  --chart-track: #e3e5ef;
+  --chart-neutral: #81869e;
+  --series-1: #7a52e0;
+  --series-2: #0093ad;
+  --series-3: #c067f0;
+  --series-4: #c77700;
+  --series-5: #e0457b;
+  --series-6: #3f6bea;
+  --series-7: #2e9e3f;
+  --series-8: #4a3fb0;
+  --series-9: #d9541e;
+  --series-10: #7d9c00;
+  --on-series-1: #ffffff;
+  --on-series-2: #0b1033;
+  --on-series-3: #0b1033;
+  --on-series-4: #0b1033;
+  --on-series-5: #0b1033;
+  --on-series-6: #ffffff;
+  --on-series-7: #0b1033;
+  --on-series-8: #ffffff;
+  --on-series-9: #0b1033;
+  --on-series-10: #0b1033;
+
+  /* Status: always shown with an icon and a label, never colour alone. */
+  --status-error: #c62828;
+  --status-warning: #b45309;
+  --status-info: #007a8c;
+  --status-good: #1b7f2a;
+
+  /* Group filter: the filtered group keeps full opacity, the others step back. */
+  --opacity-focus: 1;
+  --opacity-dim: 0.75;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #070b24;
+  --foreground: #ffffff;
+  --card: #10163a;
+  --card-foreground: #ffffff;
+  --sidebar: #0b1030;
+  --muted: #1a2150;
+  --muted-foreground: #cfd3ea;
+  --subtle-foreground: #a6accd;
+  --border: #272f63;
+  --input: #6b74a8;
+  /* Lighter tints of the accent colours: visible as outlines on the dark surfaces. */
+  --brand: #ff5cc8;
+  --brand-mid: #a070ff;
+  --brand-deep: #5c86ff;
+  --ring: #ff6fd0;
+  /* Lighter tint of the accent: readable as text on the dark surfaces. */
+  --primary: #ff7fd3;
+  --primary-foreground: #0b1033;
+  --secondary: #1a2150;
+  --secondary-foreground: #ffffff;
+  --accent: #3a1245;
+  --accent-foreground: #ffffff;
+  --destructive: #ff7a7a;
+
+  --chart-axis: #414a80;
+  --chart-track: #1e2550;
+  --chart-neutral: #8a90ad;
+  --series-1: #7a52e0;
+  --series-2: #00a3bf;
+  --series-3: #c56cf2;
+  --series-4: #c98500;
+  --series-5: #e0457b;
+  --series-6: #4f7bef;
+  --series-7: #3da84a;
+  --series-8: #6f66d9;
+  --series-9: #e0622e;
+  --series-10: #93b312;
+  --on-series-1: #ffffff;
+  --on-series-2: #0b1033;
+  --on-series-3: #0b1033;
+  --on-series-4: #0b1033;
+  --on-series-5: #0b1033;
+  --on-series-6: #0b1033;
+  --on-series-7: #0b1033;
+  --on-series-8: #ffffff;
+  --on-series-9: #0b1033;
+  --on-series-10: #0b1033;
+
+  --status-error: #ff6b6b;
+  --status-warning: #fab219;
+  --status-info: #4fd8f0;
+  --status-good: #4ade80;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-brand: var(--brand);
+  --color-brand-mid: var(--brand-mid);
+  --color-brand-deep: var(--brand-deep);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle-foreground: var(--subtle-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-chart-axis: var(--chart-axis);
+  --color-chart-track: var(--chart-track);
+  --color-chart-neutral: var(--chart-neutral);
+  --color-status-error: var(--status-error);
+  --color-status-warning: var(--status-warning);
+  --color-status-info: var(--status-info);
+  --color-status-good: var(--status-good);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, Menlo, Consolas, monospace;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  html {
+    background: var(--background);
+  }
+  body {
+    margin: 0;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.87em;
+    overflow-wrap: anywhere;
+  }
+}
+
+/* Rows of an expanded group appear with a short fade, unless motion is to be reduced. */
+@media (prefers-reduced-motion: no-preference) {
+  .tree-row {
+    animation: tree-row-reveal 150ms ease-out;
+  }
+}
+@keyframes tree-row-reveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

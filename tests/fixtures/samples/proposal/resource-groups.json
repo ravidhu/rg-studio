@@ -1,0 +1,163 @@
+{
+  "rootGroups": [
+    {
+      "name": "ops",
+      "softMemoryLimit": "85%",
+      "hardConcurrencyLimit": 60,
+      "maxQueued": 900,
+      "schedulingPolicy": "weighted_fair",
+      "jmxExport": true
+    },
+    {
+      "name": "refresh",
+      "softMemoryLimit": "70%",
+      "hardConcurrencyLimit": 25,
+      "maxQueued": 400,
+      "schedulingPolicy": "weighted_fair",
+      "jmxExport": true
+    },
+    {
+      "name": "shared",
+      "softMemoryLimit": "90%",
+      "hardConcurrencyLimit": 120,
+      "maxQueued": 1500,
+      "schedulingPolicy": "weighted_fair",
+      "jmxExport": true
+    },
+    {
+      "name": "core",
+      "softMemoryLimit": "95%",
+      "hardConcurrencyLimit": 930,
+      "maxQueued": 1400,
+      "schedulingPolicy": "weighted_fair",
+      "subGroups": [
+        {
+          "name": "pool_x",
+          "softMemoryLimit": "35%",
+          "hardConcurrencyLimit": 40,
+          "maxQueued": 90,
+          "schedulingPolicy": "weighted_fair",
+          "schedulingWeight": 6
+        },
+        {
+          "name": "team_a",
+          "softMemoryLimit": "70%",
+          "hardConcurrencyLimit": 210,
+          "maxQueued": 560,
+          "schedulingPolicy": "weighted_fair",
+          "schedulingWeight": 19,
+          "subGroups": [
+            {
+              "name": "alpha",
+              "softMemoryLimit": "64%",
+              "hardConcurrencyLimit": 330,
+              "maxQueued": 200,
+              "schedulingPolicy": "weighted_fair",
+              "schedulingWeight": 3
+            },
+            {
+              "name": "beta",
+              "softMemoryLimit": "52%",
+              "hardConcurrencyLimit": 140,
+              "maxQueued": 120,
+              "schedulingPolicy": "weighted_fair",
+              "schedulingWeight": 2
+            },
+            {
+              "name": "gamma",
+              "softMemoryLimit": "68%",
+              "hardConcurrencyLimit": 260,
+              "maxQueued": 240,
+              "schedulingPolicy": "weighted_fair",
+              "schedulingWeight": 5
+            }
+          ]
+        },
+        {
+          "name": "team_b",
+          "softMemoryLimit": "88%",
+          "hardConcurrencyLimit": 900,
+          "maxQueued": 640,
+          "schedulingPolicy": "weighted_fair",
+          "schedulingWeight": 71,
+          "subGroups": [
+            {
+              "name": "delta",
+              "softMemoryLimit": "80%",
+              "hardConcurrencyLimit": 610,
+              "maxQueued": 330,
+              "schedulingPolicy": "weighted_fair",
+              "schedulingWeight": 8
+            },
+            {
+              "name": "epsilon",
+              "softMemoryLimit": "86%",
+              "hardConcurrencyLimit": 290,
+              "maxQueued": 280,
+              "schedulingPolicy": "weighted_fair",
+              "schedulingWeight": 3
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "selectors": [
+    {
+      "user": "alice",
+      "group": "ops"
+    },
+    {
+      "user": "bob|carol|dave",
+      "group": "ops"
+    },
+    {
+      "user": "deploy_bot|",
+      "group": "core.team_b.epsilon"
+    },
+    {
+      "user": "ingest_job",
+      "group": "core.team_a.gamma"
+    },
+    {
+      "user": "export_job",
+      "group": "core.team_b.delta"
+    },
+    {
+      "clientTags": [
+        "weekly"
+      ],
+      "group": "core.team_b.delta"
+    },
+    {
+      "clientTags": [
+        "adhoc"
+      ],
+      "group": "core.team_b.delta"
+    },
+    {
+      "source": "cli-v2",
+      "group": "core.team_a.alpha"
+    },
+    {
+      "user": "[a-z]{2}[0-9]{5}",
+      "group": "core.team_a.beta"
+    },
+    {
+      "user": "[a-z]{4}[0-9]{4}",
+      "group": "core.team_b.epsilon"
+    },
+    {
+      "user": "svc_sync",
+      "group": "refresh"
+    },
+    {
+      "user": "svc_probe",
+      "group": "shared"
+    },
+    {
+      "user": ".*",
+      "group": "core.pool_x"
+    }
+  ]
+}

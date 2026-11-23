@@ -1,0 +1,148 @@
+environment: example
+ownership:
+  group_id_min: 1
+  selector_priority_above: 90
+groups:
+- name: ops
+  id: 1
+  max_queued: 900
+  hard_concurrency_limit: 60
+  soft_memory_limit: 85%
+  scheduling_policy: weighted_fair
+  jmx_export: true
+- name: refresh
+  id: 2
+  max_queued: 400
+  hard_concurrency_limit: 25
+  soft_memory_limit: 70%
+  scheduling_policy: weighted_fair
+  jmx_export: true
+- name: shared
+  id: 3
+  max_queued: 1500
+  hard_concurrency_limit: 120
+  soft_memory_limit: 90%
+  scheduling_policy: weighted_fair
+  jmx_export: true
+- name: core
+  id: 10
+  max_queued: 1600
+  hard_concurrency_limit: 840
+  soft_memory_limit: 90%
+  soft_concurrency_limit: 700
+  scheduling_policy: weighted_fair
+  subgroups:
+  - name: pool_x
+    id: 11
+    max_queued: 150
+    hard_concurrency_limit: 45
+    soft_memory_limit: 20%
+    soft_concurrency_limit: 30
+    scheduling_policy: weighted_fair
+    scheduling_weight: 7
+    soft_cpu_limit: 20h
+    hard_cpu_limit: 50h
+  - name: team_a
+    id: 12
+    max_queued: 700
+    hard_concurrency_limit: 420
+    soft_memory_limit: 65%
+    soft_concurrency_limit: 380
+    scheduling_policy: weighted_fair
+    scheduling_weight: 22
+    soft_cpu_limit: 45h
+    hard_cpu_limit: 72h
+    subgroups:
+    - name: alpha
+      id: 13
+      max_queued: 240
+      hard_concurrency_limit: 260
+      soft_memory_limit: 60%
+      soft_concurrency_limit: 190
+      scheduling_policy: weighted_fair
+      scheduling_weight: 3
+    - name: beta
+      id: 14
+      max_queued: 110
+      hard_concurrency_limit: 180
+      soft_memory_limit: 50%
+      soft_concurrency_limit: 170
+      scheduling_policy: weighted_fair
+      scheduling_weight: 5
+    - name: gamma
+      id: 15
+      max_queued: 300
+      hard_concurrency_limit: 310
+      soft_memory_limit: 65%
+      soft_concurrency_limit: 240
+      scheduling_policy: weighted_fair
+      scheduling_weight: 2
+  - name: team_b
+    id: 16
+    max_queued: 1200
+    hard_concurrency_limit: 790
+    soft_memory_limit: 78%
+    soft_concurrency_limit: 610
+    scheduling_policy: weighted_fair
+    scheduling_weight: 58
+    soft_cpu_limit: 30h
+    hard_cpu_limit: 36h
+    subgroups:
+    - name: delta
+      id: 17
+      max_queued: 260
+      hard_concurrency_limit: 520
+      soft_memory_limit: 70%
+      soft_concurrency_limit: 470
+      scheduling_policy: weighted_fair
+      scheduling_weight: 9
+    - name: epsilon
+      id: 18
+      max_queued: 420
+      hard_concurrency_limit: 460
+      soft_memory_limit: 78%
+      soft_concurrency_limit: 350
+      scheduling_policy: weighted_fair
+      scheduling_weight: 4
+selectors:
+- group: ops
+  priority: 90
+  user_regex: alice
+- group: ops
+  priority: 90
+  user_regex: bob|carol|dave
+- group: core.team_b.epsilon
+  priority: 77
+  user_regex: deploy_bot
+- group: core.team_a.gamma
+  priority: 61
+  user_regex: ingest_job
+- group: core.team_b.delta
+  priority: 61
+  user_regex: export_job
+- group: core.team_b.delta
+  priority: 52
+  client_tags:
+  - weekly
+- group: core.team_b.delta
+  priority: 52
+  client_tags:
+  - adhoc
+- group: core.team_a.alpha
+  priority: 40
+  source_regex: cli-v2
+- group: core.team_a.beta
+  priority: 33
+  user_regex: '[a-z]{2}[0-9]{5}'
+- group: core.team_b.epsilon
+  priority: 21
+  user_regex: '[a-z]{4}[0-9]{4}'
+- group: refresh
+  priority: 9
+  user_regex: svc_sync
+- group: shared
+  priority: 9
+  user_regex: svc_probe
+- group: core.pool_x
+  priority: 1
+  user_regex: .*

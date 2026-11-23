@@ -1,0 +1,14 @@
+"resource_group_id","priority","user_regex","source_regex","query_type","client_tags"
+"1","90","alice",,,
+"1","90","bob|carol|dave",,,
+"18","77","deploy_bot",,,
+"15","61","ingest_job",,,
+"17","61","export_job",,,
+"17","52",,,,"[""weekly""]"
+"17","52",,,,"[""adhoc""]"
+"13","40",,"cli-v2",,
+"14","33","[a-z]{2}[0-9]{5}",,,
+"18","21","[a-z]{4}[0-9]{4}",,,
+"2","9","svc_sync",,,
+"3","9","svc_probe",,,
+"11","1",".*",,,

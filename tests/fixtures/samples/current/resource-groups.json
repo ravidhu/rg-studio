@@ -1,0 +1,178 @@
+{
+  "rootGroups": [
+    {
+      "name": "ops",
+      "softMemoryLimit": "85%",
+      "hardConcurrencyLimit": 60,
+      "maxQueued": 900,
+      "schedulingPolicy": "weighted_fair",
+      "jmxExport": true
+    },
+    {
+      "name": "refresh",
+      "softMemoryLimit": "70%",
+      "hardConcurrencyLimit": 25,
+      "maxQueued": 400,
+      "schedulingPolicy": "weighted_fair",
+      "jmxExport": true
+    },
+    {
+      "name": "shared",
+      "softMemoryLimit": "90%",
+      "hardConcurrencyLimit": 120,
+      "maxQueued": 1500,
+      "schedulingPolicy": "weighted_fair",
+      "jmxExport": true
+    },
+    {
+      "name": "core",
+      "softMemoryLimit": "90%",
+      "softConcurrencyLimit": 700,
+      "hardConcurrencyLimit": 840,
+      "maxQueued": 1600,
+      "schedulingPolicy": "weighted_fair",
+      "subGroups": [
+        {
+          "name": "pool_x",
+          "softMemoryLimit": "20%",
+          "softConcurrencyLimit": 30,
+          "hardConcurrencyLimit": 45,
+          "maxQueued": 150,
+          "softCpuLimit": "20h",
+          "hardCpuLimit": "50h",
+          "schedulingPolicy": "weighted_fair",
+          "schedulingWeight": 7
+        },
+        {
+          "name": "team_a",
+          "softMemoryLimit": "65%",
+          "softConcurrencyLimit": 380,
+          "hardConcurrencyLimit": 420,
+          "maxQueued": 700,
+          "softCpuLimit": "45h",
+          "hardCpuLimit": "72h",
+          "schedulingPolicy": "weighted_fair",
+          "schedulingWeight": 22,
+          "subGroups": [
+            {
+              "name": "alpha",
+              "softMemoryLimit": "60%",
+              "softConcurrencyLimit": 190,
+              "hardConcurrencyLimit": 260,
+              "maxQueued": 240,
+              "schedulingPolicy": "weighted_fair",
+              "schedulingWeight": 3
+            },
+            {
+              "name": "beta",
+              "softMemoryLimit": "50%",
+              "softConcurrencyLimit": 170,
+              "hardConcurrencyLimit": 180,
+              "maxQueued": 110,
+              "schedulingPolicy": "weighted_fair",
+              "schedulingWeight": 5
+            },
+            {
+              "name": "gamma",
+              "softMemoryLimit": "65%",
+              "softConcurrencyLimit": 240,
+              "hardConcurrencyLimit": 310,
+              "maxQueued": 300,
+              "schedulingPolicy": "weighted_fair",
+              "schedulingWeight": 2
+            }
+          ]
+        },
+        {
+          "name": "team_b",
+          "softMemoryLimit": "78%",
+          "softConcurrencyLimit": 610,
+          "hardConcurrencyLimit": 790,
+          "maxQueued": 1200,
+          "softCpuLimit": "30h",
+          "hardCpuLimit": "36h",
+          "schedulingPolicy": "weighted_fair",
+          "schedulingWeight": 58,
+          "subGroups": [
+            {
+              "name": "delta",
+              "softMemoryLimit": "70%",
+              "softConcurrencyLimit": 470,
+              "hardConcurrencyLimit": 520,
+              "maxQueued": 260,
+              "schedulingPolicy": "weighted_fair",
+              "schedulingWeight": 9
+            },
+            {
+              "name": "epsilon",
+              "softMemoryLimit": "78%",
+              "softConcurrencyLimit": 350,
+              "hardConcurrencyLimit": 460,
+              "maxQueued": 420,
+              "schedulingPolicy": "weighted_fair",
+              "schedulingWeight": 4
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "selectors": [
+    {
+      "user": "alice",
+      "group": "ops"
+    },
+    {
+      "user": "bob|carol|dave",
+      "group": "ops"
+    },
+    {
+      "user": "deploy_bot",
+      "group": "core.team_b.epsilon"
+    },
+    {
+      "user": "ingest_job",
+      "group": "core.team_a.gamma"
+    },
+    {
+      "user": "export_job",
+      "group": "core.team_b.delta"
+    },
+    {
+      "clientTags": [
+        "weekly"
+      ],
+      "group": "core.team_b.delta"
+    },
+    {
+      "clientTags": [
+        "adhoc"
+      ],
+      "group": "core.team_b.delta"
+    },
+    {
+      "source": "cli-v2",
+      "group": "core.team_a.alpha"
+    },
+    {
+      "user": "[a-z]{2}[0-9]{5}",
+      "group": "core.team_a.beta"
+    },
+    {
+      "user": "[a-z]{4}[0-9]{4}",
+      "group": "core.team_b.epsilon"
+    },
+    {
+      "user": "svc_sync",
+      "group": "refresh"
+    },
+    {
+      "user": "svc_probe",
+      "group": "shared"
+    },
+    {
+      "user": ".*",
+      "group": "core.pool_x"
+    }
+  ]
+}

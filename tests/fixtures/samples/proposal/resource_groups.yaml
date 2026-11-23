@@ -1,0 +1,116 @@
+environment: example
+ownership:
+  group_id_min: 10
+  selector_priority_above: 77
+external_groups:
+- ops
+- refresh
+- shared
+groups:
+- name: core
+  id: 10
+  max_queued: 1400
+  hard_concurrency_limit: 930
+  soft_memory_limit: 95%
+  scheduling_policy: weighted_fair
+  subgroups:
+  - name: pool_x
+    id: 11
+    max_queued: 90
+    hard_concurrency_limit: 40
+    soft_memory_limit: 35%
+    scheduling_policy: weighted_fair
+    scheduling_weight: 6
+  - name: team_a
+    id: 12
+    max_queued: 560
+    hard_concurrency_limit: 210
+    soft_memory_limit: 70%
+    scheduling_policy: weighted_fair
+    scheduling_weight: 19
+    subgroups:
+    - name: alpha
+      id: 13
+      max_queued: 200
+      hard_concurrency_limit: 330
+      soft_memory_limit: 64%
+      scheduling_policy: weighted_fair
+      scheduling_weight: 3
+    - name: beta
+      id: 14
+      max_queued: 120
+      hard_concurrency_limit: 140
+      soft_memory_limit: 52%
+      scheduling_policy: weighted_fair
+      scheduling_weight: 2
+    - name: gamma
+      id: 15
+      max_queued: 240
+      hard_concurrency_limit: 260
+      soft_memory_limit: 68%
+      scheduling_policy: weighted_fair
+      scheduling_weight: 5
+  - name: team_b
+    id: 16
+    max_queued: 640
+    hard_concurrency_limit: 900
+    soft_memory_limit: 88%
+    scheduling_policy: weighted_fair
+    scheduling_weight: 71
+    subgroups:
+    - name: delta
+      id: 17
+      max_queued: 330
+      hard_concurrency_limit: 610
+      soft_memory_limit: 80%
+      scheduling_policy: weighted_fair
+      scheduling_weight: 8
+    - name: epsilon
+      id: 18
+      max_queued: 280
+      hard_concurrency_limit: 290
+      soft_memory_limit: 86%
+      scheduling_policy: weighted_fair
+      scheduling_weight: 3
+selectors:
+- group: ops
+  priority: 90
+  user_regex: alice
+- group: ops
+  priority: 90
+  user_regex: bob|carol|dave
+- group: core.team_b.epsilon
+  priority: 77
+  user_regex: deploy_bot|
+- group: core.team_a.gamma
+  priority: 61
+  user_regex: ingest_job
+- group: core.team_b.delta
+  priority: 61
+  user_regex: export_job
+- group: core.team_b.delta
+  priority: 52
+  client_tags:
+  - weekly
+- group: core.team_b.delta
+  priority: 40
+  client_tags:
+  - adhoc
+- group: core.team_a.alpha
+  priority: 40
+  source_regex: cli-v2
+- group: core.team_a.beta
+  priority: 33
+  user_regex: '[a-z]{2}[0-9]{5}'
+- group: core.team_b.epsilon
+  priority: 21
+  user_regex: '[a-z]{4}[0-9]{4}'
+- group: refresh
+  priority: 9
+  user_regex: svc_sync
+- group: shared
+  priority: 9
+  user_regex: svc_probe
+- group: core.pool_x
+  priority: 1
+  user_regex: .*

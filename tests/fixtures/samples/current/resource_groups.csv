@@ -1,0 +1,13 @@
+"resource_group_id","name","soft_memory_limit","max_queued","soft_concurrency_limit","hard_concurrency_limit","scheduling_policy","scheduling_weight","jmx_export","soft_cpu_limit","hard_cpu_limit","parent","environment","hard_physical_data_scan_limit"
+"1","ops","85%","900",,"60","weighted_fair",,"true",,,,"example",
+"2","refresh","70%","400",,"25","weighted_fair",,"true",,,,"example",
+"3","shared","90%","1500",,"120","weighted_fair",,"true",,,,"example",
+"10","core","90%","1600","700","840","weighted_fair",,,,,,"example",
+"11","pool_x","20%","150","30","45","weighted_fair","7",,"20h","50h","10","example",
+"12","team_a","65%","700","380","420","weighted_fair","22",,"45h","72h","10","example",
+"13","alpha","60%","240","190","260","weighted_fair","3",,,,"12","example",
+"14","beta","50%","110","170","180","weighted_fair","5",,,,"12","example",
+"15","gamma","65%","300","240","310","weighted_fair","2",,,,"12","example",
+"16","team_b","78%","1200","610","790","weighted_fair","58",,"30h","36h","10","example",
+"17","delta","70%","260","470","520","weighted_fair","9",,,,"16","example",
+"18","epsilon","78%","420","350","460","weighted_fair","4",,,,"16","example",
