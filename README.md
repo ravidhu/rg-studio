@@ -20,7 +20,7 @@ anywhere, and it can be deleted at any time from the side menu.
 
 ## Use
 
-The tool is one HTML file, `dist/index.html`. Open the hosted page, or download the file and open it from disk: it works offline. It starts on a built-in example with invented groups. Choose "Import my configuration" in the welcome dialog, or the Configuration page, to load your own files, then open the Group allocation page.
+The tool is one HTML file, `dist/index.html`. Open the [hosted page](https://ravidhu.github.io/rg-studio/), or download the file and open it from disk: it works offline. It starts on a built-in example with invented groups. Choose "Import my configuration" in the welcome dialog, or the Configuration page, to load your own files, then open the Group allocation page.
 
 ## Compatibility
 

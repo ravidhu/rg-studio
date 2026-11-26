@@ -2,6 +2,11 @@
   "name": "rg-studio",
   "private": true,
   "license": "MIT",
+  "homepage": "https://ravidhu.github.io/rg-studio/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ravidhu/rg-studio.git"
+  },
   "version": "0.0.0",
   "type": "module",
   "scripts": {
