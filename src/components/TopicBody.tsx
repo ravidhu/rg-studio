@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { useI18n } from '@/hooks/useI18n'
 import { useHelpExamples, useHelpValues } from '@/hooks/useHelpExamples'
 import type { TopicKey } from '@/i18n/en'
-import { SOURCE_URLS, topicMeta } from '@/utils/topics'
+import { relatedSettings, SOURCE_URLS, topicMeta } from '@/utils/topics'
 
 /** Explanation of one topic: names, values, default, effect and what was verified in the source code. */
 export function TopicBody({ topic, terms, walk }: { topic: TopicKey; terms?: readonly string[]; walk?: readonly string[] }) {
@@ -22,8 +22,9 @@ export function TopicBody({ topic, terms, walk }: { topic: TopicKey; terms?: rea
   }
   if (text.unit) names.push([t.glossary.unit, text.unit])
   if (text.fallback) names.push([t.glossary.fallback, text.fallback])
+  const related = relatedSettings(topic)
   return (
-    <div className="text-sm">
+    <div className="text-sm" data-topic={topic}>
       {names.length > 0 && (
         <dl className="mb-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 text-[13px]">
           {names.map(([label, value]) => (
@@ -59,6 +60,20 @@ export function TopicBody({ topic, terms, walk }: { topic: TopicKey; terms?: rea
         <p className="mt-2 text-[13px]">
           <a className="text-primary underline" href={SOURCE_URLS[meta.source]} target="_blank" rel="noopener noreferrer">{t.glossary.docLink}</a>
         </p>
+      )}
+      {/* The names tell the reader which fields change what the concept describes. They are plain names, and the glossary search finds them. */}
+      {related.length > 0 && (
+        <dl className="mt-2 grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-0.5 text-[13px]" data-related-settings="">
+          <dt className="text-muted-foreground">{t.glossary.relatedSettings}</dt>
+          <dd className="m-0">
+            {related.map((key, i) => (
+              <span key={key}>
+                {i > 0 && ', '}
+                <code><Highlight text={t.topics[key].title} terms={terms} /></code>
+              </span>
+            ))}
+          </dd>
+        </dl>
       )}
     </div>
   )

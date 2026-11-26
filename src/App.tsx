@@ -26,7 +26,7 @@ import { demoConfig } from '@/utils/demo'
 import { loadStored, removeStored, saveStored, type StoredConfig } from '@/utils/configStore'
 import { loadSizing, saveSizing } from '@/utils/sizingStore'
 import type { ReadAs } from '@/utils/importFiles'
-import { canonicalHash, glossaryHash, parseHash, type ConfigSection, type ConfigTab, type PageName } from '@/utils/pages'
+import { canonicalHash, cleanSearch, glossaryHash, parseHash, type ConfigSection, type ConfigTab, type PageName } from '@/utils/pages'
 import type { GlossaryTab } from '@/utils/search'
 import type { TopicCategory } from '@/utils/topics'
 import { clusterTotals, cpuLimitToVcpus } from '@/utils/sizing'
@@ -75,6 +75,18 @@ export function App() {
     const parsed = parseHash(window.location.hash)
     return { [parsed.glossaryTab]: parsed.glossaryCategory }
   })
+  // Text of the glossary search box (`typed`) and the value it settles to after a pause (`query`):
+  // kept in memory only, and carried by the address as its cleaned text.
+  const [glossarySearch, setGlossarySearch] = useState<{ typed: string; query: string }>(() => {
+    const search = parseHash(window.location.hash).glossarySearch
+    return { typed: search, query: search }
+  })
+  const typeGlossary = useCallback((next: string): void => {
+    setGlossarySearch((current) => (current.typed === next ? current : { ...current, typed: next }))
+  }, [])
+  const settleGlossary = useCallback((next: string): void => {
+    setGlossarySearch((current) => (current.query === next ? current : { ...current, query: next }))
+  }, [])
   const [cameFromChecks, setCameFromChecks] = useState(false)
   const [managerNote, setManagerNote] = useState<ManagerSwitchNote>(null)
   const [focusPeriod, setFocusPeriod] = useState<{ field: PeriodField; request: number } | null>(null)
@@ -133,9 +145,9 @@ export function App() {
 
   const helpValues = useMemo(() => ({ queryMemory: num(clusterTotals(sizing).queryMemoryGb, 1) }), [sizing, num])
 
-  // The address is the single source of the page, the tab and the glossary category: every
-  // navigation writes an address first, then the state is read back from it, exactly as
-  // when the reader edits the address or uses Back and Forward.
+  // The address is the single source of the page, the tab, the glossary category and the glossary
+  // search: every navigation writes an address first, then the state is read back from it, exactly
+  // as when the reader edits the address or uses Back and Forward.
   const applyAddress = useCallback((hash: string): void => {
     const parsed = parseHash(hash)
     setPageState(parsed.page)
@@ -147,10 +159,24 @@ export function App() {
     if (parsed.page === 'glossary') {
       setGlossaryTab(parsed.glossaryTab)
       setGlossaryCategories((current) => ({ ...current, [parsed.glossaryTab]: parsed.glossaryCategory }))
+      // Navigation carries the text of the box, so an address that matches it keeps the box and settles
+      // the pending query. A box whose text the address cannot carry (too long, rejected characters) keeps
+      // its text when the address has no search; any other address, as with Back, Forward or a hand edit,
+      // drives the box.
+      setGlossarySearch((current) =>
+        cleanSearch(current.typed) === parsed.glossarySearch
+          ? current.query === current.typed
+            ? current
+            : { ...current, query: current.typed }
+          : { typed: parsed.glossarySearch, query: parsed.glossarySearch },
+      )
     }
   }, [])
 
-  /** Goes to an address of the application. Only page, tab and category names are ever written, never the configuration. */
+  /**
+   * Goes to an address of the application. Only page, tab and category names are ever written, plus
+   * the glossary search text, the one free text, cleaned by `cleanSearch`. Never the configuration.
+   */
   const go = useCallback((address: string, mode: 'push' | 'replace' = 'push'): void => {
     if (address !== window.location.hash) {
       if (mode === 'push') window.history.pushState(null, '', address)
@@ -160,7 +186,7 @@ export function App() {
   }, [applyAddress])
 
   const setPage = (next: PageName, tab: ConfigTab = configTab): void => {
-    go(next === 'configure' ? `#configure/${tab}` : next === 'glossary' ? glossaryHash(glossaryTab, glossaryCategories[glossaryTab] ?? null) : `#${next}`)
+    go(next === 'configure' ? `#configure/${tab}` : next === 'glossary' ? glossaryHash(glossaryTab, glossaryCategories[glossaryTab] ?? null, glossarySearch.typed) : `#${next}`)
     setDrawerOpen(false)
     window.scrollTo(0, 0)
   }
@@ -200,6 +226,17 @@ export function App() {
       window.removeEventListener('popstate', sync)
     }
   }, [applyAddress])
+
+  // While the glossary shows, its address follows the settled search, the tab and the category.
+  // replaceState fires neither hashchange nor popstate, so this cannot loop, and typing adds no
+  // history entry. On the first load the address is already canonical, so nothing is rewritten twice.
+  const glossaryQuery = glossarySearch.query
+  const glossaryCategory = glossaryCategories[glossaryTab] ?? null
+  useEffect(() => {
+    if (page !== 'glossary') return
+    const address = glossaryHash(glossaryTab, glossaryCategory, glossaryQuery)
+    if (address !== window.location.hash) window.history.replaceState(null, '', address)
+  }, [page, glossaryTab, glossaryCategory, glossaryQuery])
 
   /** Saves the configuration in this browser, or says that it could not be saved. */
   const save = useCallback((next: StoredConfig): void => {
@@ -419,8 +456,12 @@ export function App() {
                     sizing={sizing}
                     tab={glossaryTab}
                     category={glossaryCategories[glossaryTab] ?? null}
-                    onTabChange={(next) => go(glossaryHash(next, glossaryCategories[next] ?? null))}
-                    onCategoryChange={(next) => go(glossaryHash(glossaryTab, next), 'replace')}
+                    typed={glossarySearch.typed}
+                    query={glossarySearch.query}
+                    onType={typeGlossary}
+                    onSettle={settleGlossary}
+                    onTabChange={(next) => go(glossaryHash(next, glossaryCategories[next] ?? null, glossarySearch.typed))}
+                    onCategoryChange={(next) => go(glossaryHash(glossaryTab, next, glossarySearch.query), 'replace')}
                   />
                 )}
             </main>

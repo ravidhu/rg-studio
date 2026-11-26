@@ -1,5 +1,5 @@
-import { Gauge, Network, Route, Scale, Search, Settings, X, type LucideIcon } from 'lucide-react'
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { ChartPie, Gauge, Network, Route, Scale, Search, Settings, X, type LucideIcon } from 'lucide-react'
+import { useEffect, useId, useMemo, useRef } from 'react'
 import { ConceptDiagram } from '@/components/diagrams/ConceptDiagram'
 import { TopicBody } from '@/components/TopicBody'
 import { Highlight } from '@/components/Highlight'
@@ -25,6 +25,7 @@ const CATEGORY_ICONS: Record<TopicCategory, LucideIcon> = {
   sharing: Scale,
   routing: Route,
   configuration: Settings,
+  charts: ChartPie,
   groups: Network,
   selectors: Route,
   global: Settings,
@@ -49,6 +50,12 @@ interface GlossaryViewProps {
   tab: GlossaryTab
   /** Category chip selected on the active tab, `null` for all. */
   category: TopicCategory | null
+  /** Text of the search box. */
+  typed: string
+  /** Search applied to the cards: `typed` after a short pause. */
+  query: string
+  onType: (next: string) => void
+  onSettle: (next: string) => void
   onTabChange: (tab: GlossaryTab) => void
   onCategoryChange: (category: TopicCategory | null) => void
 }
@@ -87,18 +94,16 @@ function TopicCard({ topic, category, terms, diagram }: TopicCardProps) {
  * search filters every tab, and category chips narrow the active tab. Cards
  * are grouped under a heading per category and carry a category tag.
  */
-export function GlossaryView({ config, tree, sizing, tab, category, onTabChange, onCategoryChange }: GlossaryViewProps) {
+export function GlossaryView({ config, tree, sizing, tab, category, typed, query, onType, onSettle, onTabChange, onCategoryChange }: GlossaryViewProps) {
   const { t, fill } = useI18n()
-  const [typed, setTyped] = useState('')
-  const [query, setQuery] = useState('')
   const inputRef = useRef<HTMLInputElement | null>(null)
   const searchHintId = useId()
 
   // The filter follows the typing after a short pause, so the page does not flicker on every key.
   useEffect(() => {
-    const timer = window.setTimeout(() => setQuery(typed), 150)
+    const timer = window.setTimeout(() => onSettle(typed), 150)
     return () => window.clearTimeout(timer)
-  }, [typed])
+  }, [typed, onSettle])
 
   // "/" focuses the search, except while typing in a field.
   useEffect(() => {
@@ -204,6 +209,7 @@ export function GlossaryView({ config, tree, sizing, tab, category, onTabChange,
           <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
           <Input
             ref={inputRef}
+            data-glossary-search=""
             type="text"
             role="searchbox"
             className="px-8"
@@ -211,8 +217,8 @@ export function GlossaryView({ config, tree, sizing, tab, category, onTabChange,
             placeholder={t.glossary.searchPlaceholder}
             aria-label={t.glossary.searchPlaceholder}
             aria-describedby={searchHintId}
-            onChange={(event) => setTyped(event.target.value)}
-            onKeyDown={(event) => event.key === 'Escape' && setTyped('')}
+            onChange={(event) => onType(event.target.value)}
+            onKeyDown={(event) => event.key === 'Escape' && onType('')}
           />
           {/* The shortcut is shown on the field while it is empty, and read out as its description. */}
           <span id={searchHintId} className="sr-only">{t.glossary.searchHint}</span>
@@ -224,7 +230,7 @@ export function GlossaryView({ config, tree, sizing, tab, category, onTabChange,
               aria-label={t.glossary.searchClear}
               title={t.glossary.searchClear}
               onClick={() => {
-                setTyped('')
+                onType('')
                 inputRef.current?.focus()
               }}
             >

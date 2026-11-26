@@ -11,7 +11,7 @@ export const SOURCE_URLS: Record<SourceKey, string> = {
 }
 
 /** Categories of the concept cards, in reading order. */
-export const CONCEPT_CATEGORIES = ['structure', 'limits', 'sharing', 'routing', 'configuration'] as const
+export const CONCEPT_CATEGORIES = ['structure', 'limits', 'sharing', 'routing', 'configuration', 'charts'] as const
 /** Categories of the properties, in reading order. */
 export const PROPERTY_CATEGORIES = ['groups', 'selectors', 'global'] as const
 
@@ -47,9 +47,9 @@ export const TOPICS: readonly TopicMeta[] = [
   { key: 'conceptTemplates', section: 'concept', category: 'structure', jsonKey: null, dbColumn: null },
   { key: 'conceptManager', section: 'concept', category: 'configuration', jsonKey: null, dbColumn: null },
   { key: 'conceptYaml', section: 'concept', category: 'configuration', jsonKey: null, dbColumn: null },
-  { key: 'conceptModel', section: 'concept', category: 'sharing', jsonKey: null, dbColumn: null },
-  { key: 'conceptSunburst', section: 'concept', category: 'sharing', jsonKey: null, dbColumn: null },
-  { key: 'conceptCeilings', section: 'concept', category: 'limits', jsonKey: null, dbColumn: null },
+  { key: 'conceptModel', section: 'concept', category: 'charts', jsonKey: null, dbColumn: null },
+  { key: 'conceptSunburst', section: 'concept', category: 'charts', jsonKey: null, dbColumn: null },
+  { key: 'conceptCeilings', section: 'concept', category: 'charts', jsonKey: null, dbColumn: null },
   { key: 'conceptMemoryOver', section: 'concept', category: 'limits', jsonKey: null, dbColumn: null },
   { key: 'conceptCpuOver', section: 'concept', category: 'limits', jsonKey: null, dbColumn: null },
   { key: 'name', section: 'group', category: 'groups', jsonKey: 'name', dbColumn: 'name' },
@@ -78,6 +78,39 @@ export const TOPICS: readonly TopicMeta[] = [
   { key: 'selQueryType', section: 'selector', category: 'selectors', jsonKey: 'queryType', dbColumn: 'query_type' },
   { key: 'selClientTags', section: 'selector', category: 'selectors', jsonKey: 'clientTags', dbColumn: 'client_tags' },
 ]
+
+export type ConceptKey = Extract<TopicKey, `concept${string}`>
+export type SettingKey = Exclude<TopicKey, ConceptKey>
+
+/**
+ * The settings a concept explains, or whose values change what it describes.
+ * They are shown at the foot of the concept card and searched with it. A
+ * concept is left out rather than given a weak link.
+ */
+export const RELATED_SETTINGS: Partial<Record<ConceptKey, readonly SettingKey[]>> = {
+  conceptAncestors: ['hardConcurrencyLimit', 'softMemoryLimit', 'hardCpuLimit', 'subGroups', 'schedulingPolicy'],
+  conceptSoftHard: ['softConcurrencyLimit', 'hardConcurrencyLimit', 'softCpuLimit', 'hardCpuLimit', 'maxQueued'],
+  conceptLeaf: ['subGroups', 'selGroup'],
+  conceptRoots: ['hardConcurrencyLimit'],
+  conceptClusterMemory: ['softMemoryLimit'],
+  conceptSizing: ['softMemoryLimit', 'softCpuLimit', 'hardCpuLimit', 'cpuQuotaPeriod'],
+  conceptCpu: ['softCpuLimit', 'hardCpuLimit', 'cpuQuotaPeriod'],
+  conceptPolicies: ['schedulingPolicy', 'schedulingWeight'],
+  conceptSelectorOrder: ['selPriority'],
+  conceptRegex: ['selUser', 'selOriginalUser', 'selAuthenticatedUser', 'selUserGroup', 'selSource', 'selQueryText'],
+  conceptTemplates: ['name', 'selUser', 'selSource', 'selGroup'],
+  conceptManager: ['environment', 'selPriority', 'subGroups'],
+  conceptModel: ['schedulingWeight', 'schedulingPolicy', 'hardConcurrencyLimit'],
+  conceptSunburst: ['schedulingWeight', 'schedulingPolicy', 'hardConcurrencyLimit'],
+  conceptCeilings: ['softMemoryLimit', 'hardCpuLimit', 'softCpuLimit', 'cpuQuotaPeriod'],
+  conceptMemoryOver: ['softMemoryLimit'],
+  conceptCpuOver: ['hardCpuLimit', 'softCpuLimit', 'cpuQuotaPeriod'],
+}
+
+/** The related settings of a topic: empty when it is not a concept or has none. */
+export function relatedSettings(key: TopicKey): readonly SettingKey[] {
+  return (RELATED_SETTINGS as Partial<Record<TopicKey, readonly SettingKey[]>>)[key] ?? []
+}
 
 export function topicMeta(key: TopicKey): TopicMeta | undefined {
   return TOPICS.find((topic) => topic.key === key)

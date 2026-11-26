@@ -1,6 +1,6 @@
 import type { Dictionary, TopicKey } from '@/i18n/en'
 import {
-  CONCEPT_CATEGORIES, PROPERTY_CATEGORIES, SOURCE_URLS, TOPICS,
+  CONCEPT_CATEGORIES, PROPERTY_CATEGORIES, SOURCE_URLS, TOPICS, relatedSettings,
   type SourceKey, type TopicCategory, type TopicMeta,
 } from '@/utils/topics'
 
@@ -77,6 +77,8 @@ export function topicText(meta: TopicMeta, dictionary: Dictionary): string {
   return [
     text.title, meta.jsonKey ?? '', meta.dbColumn ?? '', text.unit ?? '', text.fallback ?? '',
     text.what.replace(/\{\w+\}/g, ' '), text.interaction ?? '', text.verified ?? '', ...captions,
+    // The related setting names are shown on the card, so the search over visible text includes them.
+    ...relatedSettings(meta.key).map((key) => dictionary.topics[key].title),
   ].join(' \n ')
 }
 
