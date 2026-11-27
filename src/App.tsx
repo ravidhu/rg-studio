@@ -19,7 +19,7 @@ import { useAllocation } from '@/hooks/useAllocation'
 import { HelpExamplesContext, HelpValuesContext, type HelpExamples } from '@/hooks/useHelpExamples'
 import { useTheme } from '@/hooks/useTheme'
 import type { ClusterSizing, ImportIssue } from '@/types/model'
-import { runChecks } from '@/utils/checks'
+import { countCards, groupFindings, runChecks } from '@/utils/checks'
 import { configReducer, switchManager, type ConfigAction, type ManagerSwitchNote } from '@/utils/configReducer'
 import { DEMO_SOURCE, nextSource, type ConfigSource } from '@/utils/configSource'
 import { demoConfig } from '@/utils/demo'
@@ -116,8 +116,9 @@ export function App() {
   const tree = useMemo(() => buildTree(config.groups), [config.groups])
   const findings = useMemo(() => runChecks(config, sizing), [config, sizing])
   const allocation = useAllocation(tree)
-  const errorCount = findings.filter((finding) => finding.severity === 'error').length
-  const warningCount = findings.filter((finding) => finding.severity === 'warning').length
+  const cards = useMemo(() => groupFindings(findings), [findings])
+  const errorCount = countCards(cards, 'error')
+  const warningCount = countCards(cards, 'warning')
 
   const examples = useMemo<HelpExamples>(() => {
     const totals = clusterTotals(sizing)

@@ -200,15 +200,23 @@ export function runChecks(config: RgConfig, sizing: ClusterSizing): Finding[] {
       }
       if (child.group.schedulingWeight.trim() !== '') weighted += 1
     }
-    if (parentHard !== null && hardSum > parentHard) {
-      onGroup('childrenHardSumAbove', 'info', node, 'hardConcurrencyLimit', { sum: hardSum, parent: parentHard })
-    } else if (parentHard !== null && hardSum < parentHard) {
-      onGroup('childrenHardSumBelow', 'info', node, 'hardConcurrencyLimit', { sum: hardSum, parent: parentHard })
-    }
-    if (parentQueued !== null && queuedSum > parentQueued) {
-      onGroup('childrenQueueSumAbove', 'info', node, 'maxQueued', { sum: queuedSum, parent: parentQueued })
-    } else if (parentQueued !== null && queuedSum < parentQueued) {
-      onGroup('childrenQueueSumBelow', 'info', node, 'maxQueued', { sum: queuedSum, parent: parentQueued })
+    // A group gets one finding for its sub-group sums: when the running and the queued sums each
+    // differ from their limit, one note states both, so a reader does not meet two notes for what
+    // reads as a single observation. The four single findings and the four combined ones are all
+    // information, so the combined one is never less severe than the notes it replaces.
+    const hardDiff = parentHard === null || hardSum === parentHard ? null : { limit: parentHard, state: hardSum > parentHard ? 'above' : 'below' }
+    const queueDiff = parentQueued === null || queuedSum === parentQueued ? null : { limit: parentQueued, state: queuedSum > parentQueued ? 'above' : 'below' }
+    if (hardDiff !== null && queueDiff !== null) {
+      const code = hardDiff.state === 'below'
+        ? (queueDiff.state === 'below' ? 'childrenHardQueueSumBelow' : 'childrenHardBelowQueueAbove')
+        : (queueDiff.state === 'below' ? 'childrenHardAboveQueueBelow' : 'childrenHardQueueSumAbove')
+      onGroup(code, 'info', node, 'hardConcurrencyLimit', {
+        running: hardSum, queued: queuedSum, runningLimit: hardDiff.limit, queuedLimit: queueDiff.limit,
+      })
+    } else if (hardDiff !== null) {
+      onGroup(hardDiff.state === 'above' ? 'childrenHardSumAbove' : 'childrenHardSumBelow', 'info', node, 'hardConcurrencyLimit', { sum: hardSum, parent: hardDiff.limit })
+    } else if (queueDiff !== null) {
+      onGroup(queueDiff.state === 'above' ? 'childrenQueueSumAbove' : 'childrenQueueSumBelow', 'info', node, 'maxQueued', { sum: queuedSum, parent: queueDiff.limit })
     }
     if (softCpuCount > 1) {
       const parentHardCpu = periodValid ? cpuLimitToVcpus(node.group.hardCpuLimit, period) : null
@@ -325,4 +333,53 @@ export function runChecks(config: RgConfig, sizing: ClusterSizing): Finding[] {
     .map((finding, index) => ({ finding, index }))
     .sort((a, b) => SEVERITY_ORDER[a.finding.severity] - SEVERITY_ORDER[b.finding.severity] || a.index - b.index)
     .map((entry) => entry.finding)
+}
+
+/** One card of the Checks tab: the findings of one group and one severity, or one finding on its own. */
+export interface FindingCard {
+  severity: Severity
+  findings: Finding[]
+}
+
+/**
+ * Groups findings into cards. Findings that concern a group itself (a group and no selector) share a
+ * card per group and severity, so a group is named once for each kind of finding. Findings about a
+ * selector, or about no group, keep a card each. Cards follow the order of the first finding they
+ * hold, so the order given by `runChecks` (severity, then position) is preserved. An error and a
+ * note on one group stay in two cards, because their severity differs.
+ */
+export function groupFindings(findings: Finding[]): FindingCard[] {
+  const cards: FindingCard[] = []
+  const byGroup = new Map<string, FindingCard>()
+  for (const finding of findings) {
+    if (finding.groupId === null || finding.selectorId !== null) {
+      cards.push({ severity: finding.severity, findings: [finding] })
+      continue
+    }
+    const key = `${finding.severity}\u0000${finding.groupId}`
+    const existing = byGroup.get(key)
+    if (existing) {
+      existing.findings.push(finding)
+      continue
+    }
+    const card: FindingCard = { severity: finding.severity, findings: [finding] }
+    byGroup.set(key, card)
+    cards.push(card)
+  }
+  return cards
+}
+
+/** Placeholders of a check message that always hold a name or a keyword taken from the configuration. */
+const NAME_KEYS: readonly string[] = ['group', 'name', 'target', 'pattern', 'environments', 'field', 'policy']
+/** Codes whose `parent` placeholder holds a group path, not a number or a limit value. */
+const PARENT_NAME_CODES: ReadonlySet<CheckCode> = new Set<CheckCode>(['orphan', 'weightMissing', 'weightIgnored', 'queryPriorityChildren'])
+
+/** The placeholders of a check message to show as inline code: names and keywords, never numbers or limit values. */
+export function messageCodeKeys(code: CheckCode): readonly string[] {
+  return PARENT_NAME_CODES.has(code) ? [...NAME_KEYS, 'parent'] : NAME_KEYS
+}
+
+/** The number of cards of one severity, which is what every severity count of the interface shows. */
+export function countCards(cards: readonly FindingCard[], severity: Severity): number {
+  return cards.filter((card) => card.severity === severity).length
 }

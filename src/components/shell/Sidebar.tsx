@@ -84,12 +84,12 @@ export function Sidebar({ ref, page, onNavigate, sizing, onSizingChange, errorCo
                   >
                     <span className="min-w-0 flex-1 truncate">{t.tabs[name]}</span>
                     {name === 'configure' && errorCount > 0 && (
-                      <span className="inline-flex items-center gap-0.5 text-xs" title={t.checks.severity.error}>
+                      <span className="inline-flex items-center gap-0.5 text-xs" title={t.checks.severity.error} data-sidebar-count="error">
                         <SeverityIcon severity="error" /><span className="sr-only">{t.checks.severity.error} </span>{errorCount}
                       </span>
                     )}
                     {name === 'configure' && warningCount > 0 && (
-                      <span className="inline-flex items-center gap-0.5 text-xs" title={t.checks.severity.warning}>
+                      <span className="inline-flex items-center gap-0.5 text-xs" title={t.checks.severity.warning} data-sidebar-count="warning">
                         <SeverityIcon severity="warning" /><span className="sr-only">{t.checks.severity.warning} </span>{warningCount}
                       </span>
                     )}

@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react'
+import { createContext, createElement, Fragment, useContext, type ReactNode } from 'react'
 import type { Dictionary } from '@/i18n/en'
 import type { Lang, MemoryUnit } from '@/utils/format'
 
@@ -33,6 +33,27 @@ export function fillTemplate(template: string, params: Record<string, string | n
     const value = params[name]
     return value === undefined ? whole : String(value)
   })
+}
+
+/**
+ * Fills a template like `fillTemplate`, but returns React nodes: the values named in `codeKeys` are
+ * wrapped in a `<code>` element, the rest of the sentence stays plain text. Values are only ever
+ * passed as text children, never parsed as markup, because names come from imported files.
+ */
+export function fillNodes(template: string, params: Record<string, string | number>, codeKeys: readonly string[]): ReactNode[] {
+  const nodes: ReactNode[] = []
+  let last = 0
+  for (const match of template.matchAll(/\{([a-zA-Z]+)\}/g)) {
+    const name = match[1] ?? ''
+    const value = params[name]
+    if (match.index > last) nodes.push(template.slice(last, match.index))
+    if (value === undefined) nodes.push(match[0])
+    else if (codeKeys.includes(name)) nodes.push(createElement('code', { key: nodes.length }, String(value)))
+    else nodes.push(String(value))
+    last = match.index + match[0].length
+  }
+  if (last < template.length) nodes.push(template.slice(last))
+  return nodes.map((node, index) => (typeof node === 'string' ? createElement(Fragment, { key: index }, node) : node))
 }
 
 export function useI18n(): I18n {

@@ -1,3 +1,4 @@
+import { CheckMessage } from '@/components/CheckMessage'
 import { Activity, ArrowDown, ArrowUp, CircleX, Cpu, HardDrive, Info, Layers, MemoryStick, Plus, Scale, Tag, Trash2, TriangleAlert, type LucideIcon } from 'lucide-react'
 import { useEffect, useId, useRef, type Dispatch, type ReactNode } from 'react'
 import { ExplainButton, ExplainRow } from '@/components/ExplainButton'
@@ -342,7 +343,7 @@ export function GroupEditor({ config, tree, findings, selectedId, focusPeriod, o
                       <SeverityIcon severity={finding.severity} className="mt-0.5" />
                       <span>
                         <span className="sr-only">{t.checks.severity[finding.severity]}: </span>
-                        {fill(t.checks.messages[finding.code], { ...finding.params, against: finding.params.against === 'parent' ? t.checks.against.parent : t.checks.against.cluster })}
+                        <CheckMessage finding={finding} />
                       </span>
                     </li>
                   ))}

@@ -1,12 +1,13 @@
 import { CircleCheck } from 'lucide-react'
 import { SeverityIcon } from '@/components/config/GroupEditor'
+import { CheckMessage } from '@/components/CheckMessage'
 import { ExplainRow } from '@/components/ExplainButton'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardTitle } from '@/components/ui/card'
 import { useI18n } from '@/hooks/useI18n'
 import type { Severity } from '@/types/model'
-import type { Finding } from '@/utils/checks'
+import { countCards, groupFindings, type Finding } from '@/utils/checks'
 
 export type PeriodField = 'cpuQuotaPeriod' | 'physicalDataScanQuotaPeriod'
 
@@ -37,11 +38,7 @@ const SEVERITIES: readonly Severity[] = ['error', 'warning', 'info']
 
 export function ChecksView({ needsManager, onChooseManager, findings, onEdit, onClearPeriod }: ChecksViewProps) {
   const { t, fill } = useI18n()
-  const message = (finding: Finding): string =>
-    fill(t.checks.messages[finding.code], {
-      ...finding.params,
-      against: finding.params.against === 'parent' ? t.checks.against.parent : t.checks.against.cluster,
-    })
+  const cards = groupFindings(findings)
   return (
     <Card>
       <CardTitle>{t.checks.title}</CardTitle>
@@ -54,9 +51,9 @@ export function ChecksView({ needsManager, onChooseManager, findings, onEdit, on
       )}
       <div className="mt-3 flex flex-wrap gap-2">
         {SEVERITIES.map((severity) => (
-          <Badge key={severity} className="gap-1.5 px-2.5 py-1 text-[13px] text-foreground">
+          <Badge key={severity} className="gap-1.5 px-2.5 py-1 text-[13px] text-foreground" data-count-severity={severity}>
             <SeverityIcon severity={severity} />
-            {fill(t.checks.count[severity], { count: findings.filter((finding) => finding.severity === severity).length })}
+            {fill(t.checks.count[severity], { count: countCards(cards, severity) })}
           </Badge>
         ))}
       </div>
@@ -67,34 +64,44 @@ export function ChecksView({ needsManager, onChooseManager, findings, onEdit, on
         </p>
       ) : (
         <ul className="m-0 mt-4 list-none space-y-2 p-0">
-          {findings.map((finding, index) => (
-            <li key={index} className="flex items-start gap-2.5 rounded-md border bg-background px-3 py-2">
-              <SeverityIcon severity={finding.severity} className="mt-0.5" />
-              <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
-                  <span className="font-semibold uppercase tracking-wide">{t.checks.severity[finding.severity]}</span>
-                  <code>
-                    {finding.groupId !== null
-                      ? String(finding.params.group ?? '')
-                      : finding.selectorId !== null
-                        ? fill(t.checks.selector, { position: finding.params.position ?? '' })
-                        : t.checks.global}
-                  </code>
+          {cards.map((card, index) => {
+            const first = card.findings[0]
+            if (!first) return null
+            return (
+              <li key={index} className="flex items-start gap-2.5 rounded-md border bg-background px-3 py-2" data-finding-card data-severity={card.severity} data-card-group={first.groupId !== null && first.selectorId === null ? String(first.params.group ?? '') : undefined}>
+                <SeverityIcon severity={card.severity} className="mt-0.5" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+                    <span className="font-semibold uppercase tracking-wide">{t.checks.severity[card.severity]}</span>
+                    <code>
+                      {first.groupId !== null
+                        ? String(first.params.group ?? '')
+                        : first.selectorId !== null
+                          ? fill(t.checks.selector, { position: first.params.position ?? '' })
+                          : t.checks.global}
+                    </code>
+                  </div>
+                  {card.findings.length === 1 ? (
+                    <p className="mt-0.5 text-sm [overflow-wrap:anywhere]"><CheckMessage finding={first} /></p>
+                  ) : (
+                    <ul className="m-0 mt-0.5 list-disc space-y-1 pl-4 text-sm [overflow-wrap:anywhere]">
+                      {card.findings.map((finding, position) => <li key={position}><CheckMessage finding={finding} /></li>)}
+                    </ul>
+                  )}
                 </div>
-                <p className="mt-0.5 text-sm [overflow-wrap:anywhere]">{message(finding)}</p>
-              </div>
-              {(finding.code === 'cpuPeriodUnused' || finding.code === 'scanPeriodUnused') && (
-                <Button size="sm" className="shrink-0" onClick={() => onClearPeriod(finding.code === 'cpuPeriodUnused' ? 'cpuQuotaPeriod' : 'physicalDataScanQuotaPeriod')}>
-                  {t.checks.clear}
-                </Button>
-              )}
-              {(finding.groupId !== null || finding.selectorId !== null || periodFieldOf(finding) !== null) && (
-                <Button size="sm" className="shrink-0" onClick={() => onEdit({ groupId: finding.groupId, selectorId: finding.selectorId, field: periodFieldOf(finding) })}>
-                  {t.checks.edit}
-                </Button>
-              )}
-            </li>
-          ))}
+                {(first.code === 'cpuPeriodUnused' || first.code === 'scanPeriodUnused') && (
+                  <Button size="sm" className="shrink-0" onClick={() => onClearPeriod(first.code === 'cpuPeriodUnused' ? 'cpuQuotaPeriod' : 'physicalDataScanQuotaPeriod')}>
+                    {t.checks.clear}
+                  </Button>
+                )}
+                {(first.groupId !== null || first.selectorId !== null || periodFieldOf(first) !== null) && (
+                  <Button size="sm" className="shrink-0" onClick={() => onEdit({ groupId: first.groupId, selectorId: first.selectorId, field: periodFieldOf(first) })}>
+                    {t.checks.edit}
+                  </Button>
+                )}
+              </li>
+            )
+          })}
         </ul>
       )}
       <ExplainRow topics={['conceptAncestors', 'conceptSoftHard', 'conceptPolicies', 'conceptSelectorOrder']} />

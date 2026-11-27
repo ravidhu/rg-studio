@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { RgConfig } from '@/types/model'
-import { runChecks, type Finding } from '@/utils/checks'
+import { countCards, groupFindings, runChecks, type Finding } from '@/utils/checks'
 import { demoConfig } from '@/utils/demo'
 import { parseDbTables } from '@/utils/parseDb'
 import { parseResourceGroupsJson } from '@/utils/parseJson'
@@ -78,12 +78,51 @@ describe('runChecks', () => {
 
   it('compares children with their parent', () => {
     const findings = runChecks(fromJson(WEIGHTED_TREE_JSON), DEFAULT_SIZING)
-    const sums = findings.filter((finding) => finding.code === 'childrenHardSumAbove').map((finding) => finding.params.group)
+    const sums = findings.filter((finding) => ['childrenHardSumAbove', 'childrenHardQueueSumAbove', 'childrenHardAboveQueueBelow'].includes(finding.code)).map((finding) => finding.params.group)
     expect(sums).toEqual(['R', 'R.A', 'R.U'])
     const config = fromJson({
       rootGroups: [group('p', { softMemoryLimit: '50%', subGroups: [group('big', { hardConcurrencyLimit: 50, maxQueued: 99, softMemoryLimit: '80%' })] })],
     })
     expect(codes(runChecks(config, DEFAULT_SIZING), 'warning')).toEqual(expect.arrayContaining(['childHardAboveParent', 'childQueueAboveParent', 'childMemoryAboveParent']))
+  })
+
+  // Builds a parent p with two sub-groups, so the sums of the sub-groups are the sums of the two limits.
+  function sumsFinding(limits: { running: number; queued: number }, children: { running: number; queued: number }) {
+    const half = (value: number): [number, number] => [Math.floor(value / 2), value - Math.floor(value / 2)]
+    const [runA, runB] = half(children.running)
+    const [queA, queB] = half(children.queued)
+    const config = fromJson({
+      rootGroups: [group('p', {
+        hardConcurrencyLimit: limits.running, maxQueued: limits.queued,
+        subGroups: [group('a', { hardConcurrencyLimit: runA, maxQueued: queA }), group('b', { hardConcurrencyLimit: runB, maxQueued: queB })],
+      })],
+    })
+    return runChecks(config, DEFAULT_SIZING).filter((finding) => finding.params.group === 'p' && finding.code.startsWith('children'))
+  }
+
+  it.each([
+    ['running below and queued below', { running: 200, queued: 1000 }, { running: 190, queued: 810 }, 'childrenHardQueueSumBelow'],
+    ['running above and queued above', { running: 100, queued: 100 }, { running: 190, queued: 810 }, 'childrenHardQueueSumAbove'],
+    ['running above and queued below', { running: 100, queued: 1000 }, { running: 190, queued: 810 }, 'childrenHardAboveQueueBelow'],
+    ['running below and queued above', { running: 200, queued: 100 }, { running: 190, queued: 810 }, 'childrenHardBelowQueueAbove'],
+  ])('gives one finding when %s', (_name, limits, children, code) => {
+    const found = sumsFinding(limits, children)
+    expect(found).toHaveLength(1)
+    expect(found[0]).toMatchObject({
+      code, severity: 'info', field: 'hardConcurrencyLimit',
+      params: { running: 190, queued: 810, runningLimit: limits.running, queuedLimit: limits.queued },
+    })
+  })
+
+  it.each([
+    ['running below only', { running: 200, queued: 810 }, 'childrenHardSumBelow', 'hardConcurrencyLimit'],
+    ['running above only', { running: 100, queued: 810 }, 'childrenHardSumAbove', 'hardConcurrencyLimit'],
+    ['queued below only', { running: 190, queued: 1000 }, 'childrenQueueSumBelow', 'maxQueued'],
+    ['queued above only', { running: 190, queued: 100 }, 'childrenQueueSumAbove', 'maxQueued'],
+  ])('keeps the single finding for %s', (_name, limits, code, field) => {
+    const found = sumsFinding(limits, { running: 190, queued: 810 })
+    expect(found).toHaveLength(1)
+    expect(found[0]).toMatchObject({ code, severity: 'info', field })
   })
 
   it('flags weights that are missing or ignored by the parent policy', () => {
@@ -153,5 +192,42 @@ describe('runChecks', () => {
     }), DEFAULT_SIZING)
     expect(codes(used)).not.toContain('cpuPeriodUnused')
     expect(codes(used)).not.toContain('scanPeriodUnused')
+  })
+
+  describe('groupFindings', () => {
+    const make = (code: Finding['code'], severity: Finding['severity'], groupId: string | null, selectorId: string | null = null): Finding =>
+      ({ code, severity, groupId, selectorId, field: null, params: {} })
+
+    it('gives one card with two messages for two findings of one group and one severity', () => {
+      const cards = groupFindings([make('leafWithoutSelector', 'info', 'g1'), make('weightsAllMissing', 'info', 'g1')])
+      expect(cards).toHaveLength(1)
+      expect(cards[0]?.findings.map((finding) => finding.code)).toEqual(['leafWithoutSelector', 'weightsAllMissing'])
+    })
+
+    it('gives two cards for a warning and a note on one group', () => {
+      const cards = groupFindings([make('childHardAboveParent', 'warning', 'g1'), make('weightsAllMissing', 'info', 'g1')])
+      expect(cards.map((card) => card.severity)).toEqual(['warning', 'info'])
+    })
+
+    it('gives one card each to findings with no group, and to selector findings', () => {
+      const cards = groupFindings([make('cpuPeriodUnused', 'info', null), make('scanPeriodUnused', 'info', null), make('selectorNonLeaf', 'error', 'g1', 's1'), make('selectorNonLeaf', 'error', 'g1', 's2')])
+      expect(cards).toHaveLength(4)
+    })
+
+    it('counts cards, not findings, per severity', () => {
+      const cards = groupFindings([make('leafWithoutSelector', 'info', 'g1'), make('weightsAllMissing', 'info', 'g1'), make('cpuPeriodUnused', 'info', null)])
+      expect(countCards(cards, 'info')).toBe(2)
+      expect(countCards(cards, 'error')).toBe(0)
+    })
+
+    it('keeps the order of the first finding of each card', () => {
+      const cards = groupFindings([
+        make('childHardAboveParent', 'warning', 'g2'), make('weightsAllMissing', 'info', 'g1'), make('cpuPeriodUnused', 'info', null),
+        make('leafWithoutSelector', 'info', 'g2'), make('leafWithoutSelector', 'info', 'g1'),
+      ])
+      expect(cards.map((card) => card.findings.map((finding) => `${finding.groupId}:${finding.code}`))).toEqual([
+        ['g2:childHardAboveParent'], ['g1:weightsAllMissing', 'g1:leafWithoutSelector'], ['null:cpuPeriodUnused'], ['g2:leafWithoutSelector'],
+      ])
+    })
   })
 })

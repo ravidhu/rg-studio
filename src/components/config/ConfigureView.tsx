@@ -9,7 +9,7 @@ import { SourceManagerChoice } from '@/components/config/SourceManagerChoice'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useI18n } from '@/hooks/useI18n'
 import type { ImportIssue, ManagerMode, RgConfig, Severity } from '@/types/model'
-import type { Finding } from '@/utils/checks'
+import { countCards, groupFindings, type Finding } from '@/utils/checks'
 import type { ConfigAction, ManagerSwitchNote } from '@/utils/configReducer'
 import type { ConfigOrigin } from '@/utils/configSource'
 import type { ReadAs } from '@/utils/importFiles'
@@ -67,8 +67,9 @@ export function ConfigureView({
   const importRef = useRef<HTMLDivElement | null>(null)
   const exportRef = useRef<HTMLDivElement | null>(null)
   const focusServed = useRef<number | null>(null)
-  const errorCount = findings.filter((finding) => finding.severity === 'error').length
-  const warningCount = findings.filter((finding) => finding.severity === 'warning').length
+  const cards = groupFindings(findings)
+  const errorCount = countCards(cards, 'error')
+  const warningCount = countCards(cards, 'warning')
 
   useEffect(() => {
     if (scrollTo === null || tab !== 'import-export') return
