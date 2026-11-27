@@ -133,7 +133,11 @@ export function runChecks(config: RgConfig, sizing: ClusterSizing): Finding[] {
     if (hard !== null && soft !== null && soft > hard) {
       onGroup('softConcurrencyAboveHard', 'error', node, 'softConcurrencyLimit', { soft, hard })
     }
-    if (hard === 0) onGroup('hardConcurrencyZero', 'warning', node, 'hardConcurrencyLimit')
+    // A zero hard limit with a zero queue is the usual way to refuse a client, so it is reported as information, not as a mistake.
+    if (hard === 0) {
+      if (parseNonNegativeInteger(group.maxQueued) === 0) onGroup('groupBlocked', 'info', node, 'hardConcurrencyLimit')
+      else onGroup('hardConcurrencyZero', 'warning', node, 'hardConcurrencyLimit')
+    }
     const softCpu = parseDuration(group.softCpuLimit)
     const hardCpu = parseDuration(group.hardCpuLimit)
     if (softCpu !== null && group.hardCpuLimit.trim() === '') onGroup('softCpuWithoutHard', 'error', node, 'hardCpuLimit')

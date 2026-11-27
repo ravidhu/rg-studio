@@ -75,7 +75,7 @@ export const en = {
     compatibility: 'Compatible with Trino 479 and later. Starburst Enterprise follows the same version numbers: its resource group manager files were checked as identical to those of Trino in release 482.',
     compatibilityTitle: 'Compatibility',
     steps: {
-      configure: { title: 'Import your configuration', text: 'JSON, YAML or CSV exports of the database tables.' },
+      configure: { title: 'Import your resource groups', text: 'The resource-groups.json file (or its YAML form) or the CSV exports of the resource group tables. Not the cluster configuration.' },
       'group-allocation': { title: 'See the allocation', text: 'Who gets the simultaneous queries, the memory and the CPU.' },
       'selector-tester': { title: 'Test the selectors', text: 'Describe a query and see the group it lands in.' },
       glossary: { title: 'Understand the concepts', text: 'Every setting and how the sharing works.' },
@@ -129,7 +129,7 @@ export const en = {
     empty: 'The configuration has no group yet. Add one on the Configuration page.',
   },
   config: {
-    importTitle: 'Import a configuration',
+    importTitle: 'Import a resource group configuration',
     importFile: 'File configuration: resource-groups.json, or a YAML file.',
     importDb: 'Database configuration: the CSV exports of the tables, picked together. resource_groups.csv (required), selectors.csv and resource_groups_global_properties.csv (optional). The first line holds the column names.',
     importDetails: 'The format and the tables are detected from the content, whatever the file names. In CSV files, quoted fields, any column order, comma, semicolon or tab separators and Windows line ends are accepted. A YAML file in the database loader format is also read as a database configuration.',
@@ -316,7 +316,8 @@ export const en = {
       memoryAboveCluster: 'softMemoryLimit of {group} ({value}) is above the cluster query memory of {cluster}\u00a0GB, so it never limits the group.',
       scanWithoutPeriod: '{group} has a data scan limit but physicalDataScanQuotaPeriod is not set. The cluster refuses this configuration; with the database manager, the new configuration is not applied and an error is logged (verified in the source code of release 482).',
       softConcurrencyAboveHard: 'On {group} the soft concurrency limit ({soft}) is above the hard limit ({hard}).',
-      hardConcurrencyZero: '{group} has a hard concurrency limit of zero: none of its queries can run.',
+      hardConcurrencyZero: '{group} has a hard concurrency limit of zero: its queries wait in its queue and none of them can start.',
+      groupBlocked: '{group} blocks its queries: its hard concurrency limit and its queue are both zero, so every query routed to it is rejected.',
       softCpuWithoutHard: '{group} has a softCpuLimit without a hardCpuLimit. The documentation requires both.',
       softCpuAboveHard: 'On {group} softCpuLimit ({soft}) is above hardCpuLimit ({hard}).',
       cpuWithoutPeriod: '{group} has CPU limits but cpuQuotaPeriod is not set: the limits have no time base and cannot be enforced. The cluster refuses this configuration with the message "cpuQuotaPeriod must be specified to use CPU limits on group"; with the database manager, the new configuration is not applied and an error is logged (verified in the source code of release 482).',

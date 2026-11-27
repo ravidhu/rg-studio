@@ -42,6 +42,29 @@ describe('runChecks', () => {
     expect(target?.groupId).toBe(config.groups[0]?.id)
   })
 
+  it('reports a zero hard limit with a zero queue as information, not as a warning', () => {
+    const config = fromJson({ rootGroups: [group('a', { hardConcurrencyLimit: 0, maxQueued: 0 })], selectors: [{ group: 'a' }] })
+    const findings = runChecks(config, DEFAULT_SIZING)
+    const blocked = findings.find((finding) => finding.code === 'groupBlocked')
+    expect(blocked?.severity).toBe('info')
+    expect(blocked?.params.group).toBe('a')
+    expect(codes(findings)).not.toContain('hardConcurrencyZero')
+  })
+
+  it('warns about a zero hard limit with a queue that can hold queries', () => {
+    const config = fromJson({ rootGroups: [group('a', { hardConcurrencyLimit: 0, maxQueued: 5 })], selectors: [{ group: 'a' }] })
+    const findings = runChecks(config, DEFAULT_SIZING)
+    expect(codes(findings, 'warning')).toContain('hardConcurrencyZero')
+    expect(codes(findings)).not.toContain('groupBlocked')
+  })
+
+  it('reports neither code when the hard limit is positive', () => {
+    const config = fromJson({ rootGroups: [group('a', { hardConcurrencyLimit: 3, maxQueued: 0 })], selectors: [{ group: 'a' }] })
+    const found = codes(runChecks(config, DEFAULT_SIZING))
+    expect(found).not.toContain('hardConcurrencyZero')
+    expect(found).not.toContain('groupBlocked')
+  })
+
   it('flags unparseable values with the field name', () => {
     const config = fromJson({
       rootGroups: [group('a', { softMemoryLimit: 'lots', hardCpuLimit: '{{ x }}h', schedulingPolicy: 'random', hardPhysicalDataScanLimit: '1 parsec' }), group('b', { softMemoryLimit: '120%' })],

@@ -59,7 +59,7 @@ export const fr: Dictionary = {
     compatibility: "Compatible avec Trino 479 et versions ultérieures. Starburst Enterprise suit la même numérotation : les fichiers de son gestionnaire de groupes de ressources ont été vérifiés identiques à ceux de Trino dans la version 482.",
     compatibilityTitle: "Compatibilité",
     steps: {
-      configure: { title: "Importez votre configuration", text: "JSON, YAML ou exports CSV des tables de la base." },
+      configure: { title: "Importez vos groupes de ressources", text: "Le fichier resource-groups.json (ou sa forme YAML) ou les exports CSV des tables des groupes de ressources. Pas la configuration du cluster." },
       "group-allocation": { title: "Visualisez la répartition", text: "Qui obtient les requêtes simultanées, la mémoire et le CPU." },
       "selector-tester": { title: "Testez les sélecteurs", text: "Décrivez une requête et voyez dans quel groupe elle arrive." },
       glossary: { title: "Comprenez les concepts", text: "Chaque réglage et le fonctionnement du partage." },
@@ -113,7 +113,7 @@ export const fr: Dictionary = {
     empty: "La configuration ne contient encore aucun groupe. Ajoutez-en un dans la page Configuration.",
   },
   config: {
-    importTitle: "Importer une configuration",
+    importTitle: "Importer une configuration de groupes de ressources",
     importFile: "Configuration par fichier : resource-groups.json, ou un fichier YAML.",
     importDb: "Configuration en base de données : les exports CSV des tables, sélectionnés ensemble. resource_groups.csv (obligatoire), selectors.csv et resource_groups_global_properties.csv (facultatifs). La première ligne contient les noms de colonnes.",
     importDetails: "Le format et les tables sont détectés d'après le contenu, quels que soient les noms des fichiers. Dans les fichiers CSV, les champs entre guillemets, tout ordre de colonnes, les séparateurs virgule, point-virgule ou tabulation et les fins de ligne Windows sont acceptés. Un fichier YAML au format de chargement en base est lu lui aussi comme une configuration en base de données.",
@@ -298,7 +298,8 @@ export const fr: Dictionary = {
       memoryAboveCluster: "softMemoryLimit de {group} ({value}) dépasse la mémoire de requêtes du cluster, {cluster}\u00a0Go : elle ne limite donc jamais le groupe.",
       scanWithoutPeriod: "{group} a une limite de données lues mais physicalDataScanQuotaPeriod n'est pas défini. Le cluster refuse cette configuration ; avec le gestionnaire par base de données, la nouvelle configuration n'est pas appliquée et une erreur est journalisée (vérifié dans le code source de la version 482).",
       softConcurrencyAboveHard: "Sur {group}, la limite souple de concurrence ({soft}) dépasse la limite stricte ({hard}).",
-      hardConcurrencyZero: "{group} a une limite stricte de concurrence de zéro : aucune de ses requêtes ne peut s'exécuter.",
+      hardConcurrencyZero: "{group} a une limite stricte de concurrence de zéro : ses requêtes attendent dans sa file d'attente et aucune ne peut démarrer.",
+      groupBlocked: "{group} bloque ses requêtes : sa limite stricte de concurrence et sa file d'attente sont toutes deux à zéro, donc toute requête dirigée vers ce groupe est refusée.",
       softCpuWithoutHard: "{group} a un softCpuLimit sans hardCpuLimit. La documentation exige les deux.",
       softCpuAboveHard: "Sur {group}, softCpuLimit ({soft}) dépasse hardCpuLimit ({hard}).",
       cpuWithoutPeriod: "{group} a des limites CPU mais cpuQuotaPeriod n'est pas défini : les limites n'ont pas de base de temps et ne peuvent pas être appliquées. Le cluster refuse cette configuration avec le message « cpuQuotaPeriod must be specified to use CPU limits on group » ; avec le gestionnaire par base de données, la nouvelle configuration n'est pas appliquée et une erreur est journalisée (vérifié dans le code source de la version 482).",
